@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dijkstra's Algorithm Visualization</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            color: black;
+            align-items: center;
+            background: white;
+            padding: 20px;
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+        
+        .controls {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        button {
+            padding: 8px 16px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        button:hover {
+            background-color: #45a049;
+        }
+        
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            padding: 10px;
+            background-color: #e9e9e9;
+            border-radius: 5px;
+        }
+        
+        .control-group label {
+            font-weight: bold;
+        }
+        
+        .control-group input, .control-group select {
+            padding: 5px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+        }
+        
+        .grid-container {
+            max-width: 100%;
+            overflow: auto;
+            margin-bottom: 20px;
+        }
+        
+        .grid {
+            display: grid;
+            gap: 1px;
+            background-color: #ddd;
+            border: 1px solid #999;
+        }
+        
+        .cell {
+            min-width: 20px;
+            min-height: 20px;
+            background-color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            cursor: pointer;
+            user-select: none;
+        }
+        
+        .cell.start {
+            background-color: green;
+            color: white;
+        }
+        
+        .cell.end {
+            background-color: red;
+            color: white;
+        }
+        
+        .cell.wall {
+            background-color: #333;
+        }
+        
+        .cell.visited {
+            background-color: #7fb8ff;
+            animation: visitedAnimation 0.3s ease-out;
+        }
+        
+        .cell.path {
+            background-color: yellow;
+            animation: pathAnimation 0.5s ease-out;
+        }
+        
+        .cell.current {
+            background-color: #ff8c00;
+        }
+        
+        @keyframes visitedAnimation {
+            0% {
+                transform: scale(0.3);
+                background-color: #d1e3ff;
+            }
+            50% {
+                transform: scale(1.1);
+                background-color: #9cc2ff;
+            }
+            100% {
+                transform: scale(1);
+                background-color: #7fb8ff;
+            }
+        }
+        
+        @keyframes pathAnimation {
+            0% {
+                transform: scale(0.6);
+                background-color: #ffff80;
+            }
+            50% {
+                transform: scale(1.2);
+                background-color: #ffff00;
+            }
+            100% {
+                transform: scale(1);
+                background-color: yellow;
+            }
+        }
+        
+        .legend {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border: 1px solid #999;
+        }
+    </style>
+</head>
+<body>
+    <h1>Dijkstra's Algorithm Visualization</h1>
+    
+    <div class="controls">
+        <div class="control-group">
+            <label for="rowsInput">Rows:</label>
+            <input type="number" id="rowsInput" min="5" max="50" value="15">
+        </div>
+        
+        <div class="control-group">
+            <label for="colsInput">Columns:</label>
+            <input type="number" id="colsInput" min="5" max="50" value="25">
+        </div>
+        
+        <div class="control-group">
+            <label for="cellSizeInput">Cell Size (px):</label>
+            <input type="number" id="cellSizeInput" min="10" max="40" value="20">
+        </div>
+        
+        <div class="control-group">
+            <label>Node Type:</label>
+            <select id="nodeTypeSelect">
+                <option value="start">Start Node</option>
+                <option value="end">End Node</option>
+                <option value="wall">Wall Node</option>
+                <option value="erase">Erase</option>
+            </select>
+        </div>
+        
+        <button id="applyGridBtn">Apply Grid Settings</button>
+        <button id="startBtn">Start Dijkstra's</button>
+        <button id="resetBtn">Reset Grid</button>
+        <button id="clearPathBtn">Clear Path</button>
+        <button id="randomWallsBtn">Random Walls</button>
+    </div>
+    
+    <div class="grid-container">
+        <div class="grid" id="grid"></div>
+    </div>
+    
+    <div class="legend">
+        <div class="legend-item">
+            <div class="legend-color" style="background-color: green;"></div>
+            <span>Start Node</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color" style="background-color: red;"></div>
+            <span>End Node</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color" style="background-color: #333;"></div>
+            <span>Wall Node</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color" style="background-color: #7fb8ff;"></div>
+            <span>Visited Node</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color" style="background-color: yellow;"></div>
+            <span>Shortest Path</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color" style="background-color: #ff8c00;"></div>
+            <span>Current Node</span>
+        </div>
+    </div>
+    
+    <script>
+        // Grid state
+        let grid = [];
+        let startPos = { row: 5, col: 5 };
+        let endPos = { row: 9, col: 19 };
+        let isMouseDown = false;
+        let isRunning = false;
+        let selectedNodeType = 'wall';
+        
+        // Grid dimensions
+        let ROWS = 15;
+        let COLS = 25;
+        let CELL_SIZE = 20;
+        
+        // Cell types
+        const EMPTY = 0;
+        const WALL = 1;
+        const START = 2;
+        const END = 3;
+        
+        // Animation speeds
+        const VISIT_SPEED = 10;
+        const PATH_SPEED = 50;
+        
+        // Initialize the grid
+        function initializeGrid() {
+            const gridElement = document.getElementById('grid');
+            gridElement.innerHTML = '';
+            
+            // Set grid styles
+            gridElement.style.gridTemplateColumns = `repeat(${COLS}, ${CELL_SIZE}px)`;
+            gridElement.style.gridTemplateRows = `repeat(${ROWS}, ${CELL_SIZE}px)`;
+            
+            grid = new Array(ROWS);
+            for (let row = 0; row < ROWS; row++) {
+                grid[row] = new Array(COLS);
+                for (let col = 0; col < COLS; col++) {
+                    grid[row][col] = EMPTY;
+                    
+                    const cell = document.createElement('div');
+                    cell.className = 'cell';
+                    cell.dataset.row = row;
+                    cell.dataset.col = col;
+                    cell.style.minWidth = `${CELL_SIZE}px`;
+                    cell.style.minHeight = `${CELL_SIZE}px`;
+                    
+                    // Set start and end positions
+                    if (row === startPos.row && col === startPos.col) {
+                        grid[row][col] = START;
+                        cell.classList.add('start');
+                    } else if (row === endPos.row && col === endPos.col) {
+                        grid[row][col] = END;
+                        cell.classList.add('end');
+                    }
+                    
+                    // Event listeners for node editing
+                    cell.addEventListener('mousedown', () => handleCellClick(row, col));
+                    cell.addEventListener('mouseenter', () => {
+                        if (isMouseDown) handleCellClick(row, col);
+                    });
+                    
+                    gridElement.appendChild(cell);
+                }
+            }
+            
+            document.addEventListener('mouseup', () => {
+                isMouseDown = false;
+            });
+        }
+        
+        // Handle cell click based on selected node type
+        function handleCellClick(row, col) {
+            if (isRunning) return;
+            
+            isMouseDown = true;
+            const cell = getCellElement(row, col);
+            
+            switch(selectedNodeType) {
+                case 'start':
+                    // Remove old start position
+                    const oldStart = getCellElement(startPos.row, startPos.col);
+                    oldStart.classList.remove('start');
+                    grid[startPos.row][startPos.col] = EMPTY;
+                    
+                    // Set new start position
+                    startPos = { row, col };
+                    cell.classList.add('start');
+                    grid[row][col] = START;
+                    break;
+                    
+                case 'end':
+                    // Remove old end position
+                    const oldEnd = getCellElement(endPos.row, endPos.col);
+                    oldEnd.classList.remove('end');
+                    grid[endPos.row][endPos.col] = EMPTY;
+                    
+                    // Set new end position
+                    endPos = { row, col };
+                    cell.classList.add('end');
+                    grid[row][col] = END;
+                    break;
+                    
+                case 'wall':
+                    if (grid[row][col] === START || grid[row][col] === END) return;
+                    
+                    if (grid[row][col] === WALL) {
+                        grid[row][col] = EMPTY;
+                        cell.classList.remove('wall');
+                    } else {
+                        grid[row][col] = WALL;
+                        cell.classList.add('wall');
+                    }
+                    break;
+                    
+                case 'erase':
+                    if (grid[row][col] === START || grid[row][col] === END) return;
+                    
+                    grid[row][col] = EMPTY;
+                    cell.classList.remove('wall', 'visited', 'path', 'current');
+                    break;
+            }
+        }
+        
+        // Get cell DOM element
+        function getCellElement(row, col) {
+            return document.querySelector(`.cell[data-row="${row}"][data-col="${col}"]`);
+        }
+        
+        // Reset the grid
+        function resetGrid() {
+            if (isRunning) return;
+            
+            // Reset to default positions
+            startPos = { 
+                row: Math.floor(ROWS/3), 
+                col: Math.floor(COLS/3) 
+            };
+            endPos = { 
+                row: Math.floor(ROWS/2), 
+                col: Math.floor(2*COLS/3) 
+            };
+            
+            initializeGrid();
+        }
+        
+        // Clear the path visualization
+        function clearPath() {
+            if (isRunning) return;
+            
+            for (let row = 0; row < ROWS; row++) {
+                for (let col = 0; col < COLS; col++) {
+                    if (grid[row][col] === EMPTY || grid[row][col] === WALL) {
+                        const cell = getCellElement(row, col);
+                        cell.classList.remove('visited', 'path', 'current');
+                    }
+                }
+            }
+        }
+        
+        // Generate random walls
+        function generateRandomWalls() {
+            if (isRunning) return;
+            
+            clearPath();
+            
+            for (let row = 0; row < ROWS; row++) {
+                for (let col = 0; col < COLS; col++) {
+                    // Skip start and end positions
+                    if ((row === startPos.row && col === startPos.col) || 
+                        (row === endPos.row && col === endPos.col)) {
+                        continue;
+                    }
+                    
+                    // 25% chance to be a wall
+                    if (Math.random() < 0.25) {
+                        grid[row][col] = WALL;
+                        getCellElement(row, col).classList.add('wall');
+                    } else {
+                        grid[row][col] = EMPTY;
+                        getCellElement(row, col).classList.remove('wall');
+                    }
+                }
+            }
+        }
+        
+        // Apply new grid settings
+        function applyGridSettings() {
+            if (isRunning) return;
+            
+            const newRows = parseInt(document.getElementById('rowsInput').value);
+            const newCols = parseInt(document.getElementById('colsInput').value);
+            const newCellSize = parseInt(document.getElementById('cellSizeInput').value);
+            
+            // Validate inputs
+            if (newRows < 5 || newRows > 50 || newCols < 5 || newCols > 50 || 
+                newCellSize < 10 || newCellSize > 40) {
+                alert('Please enter valid values:\nRows/Cols: 5-50\nCell Size: 10-40px');
+                return;
+            }
+            
+            ROWS = newRows;
+            COLS = newCols;
+            CELL_SIZE = newCellSize;
+            
+            // Reset to center-ish positions
+            startPos = { 
+                row: Math.floor(ROWS/3), 
+                col: Math.floor(COLS/3) 
+            };
+            endPos = { 
+                row: Math.floor(ROWS/2), 
+                col: Math.floor(2*COLS/3) 
+            };
+            
+            initializeGrid();
+        }
+        
+        // Dijkstra's algorithm implementation
+        async function dijkstra() {
+            if (isRunning) return;
+            isRunning = true;
+            clearPath();
+            
+            // Priority queue (min-heap) based on distance
+            const priorityQueue = [];
+            
+            // Distance matrix
+            const distances = new Array(ROWS);
+            const previous = new Array(ROWS);
+            for (let row = 0; row < ROWS; row++) {
+                distances[row] = new Array(COLS).fill(Infinity);
+                previous[row] = new Array(COLS).fill(null);
+            }
+            
+            // Visited matrix
+            const visited = new Array(ROWS);
+            for (let row = 0; row < ROWS; row++) {
+                visited[row] = new Array(COLS).fill(false);
+            }
+            
+            // Initialize start node
+            distances[startPos.row][startPos.col] = 0;
+            priorityQueue.push({ row: startPos.row, col: startPos.col, distance: 0 });
+            
+            // Directions: up, down, left, right
+            const directions = [
+                [-1, 0], [1, 0], [0, -1], [0, 1]
+            ];
+            
+            let found = false;
+            
+            while (priorityQueue.length > 0 && !found) {
+                // Sort queue to get the node with smallest distance
+                priorityQueue.sort((a, b) => a.distance - b.distance);
+                const current = priorityQueue.shift();
+                const { row, col } = current;
+                
+                // Skip if already visited
+                if (visited[row][col]) continue;
+                
+                // Mark as visited
+                visited[row][col] = true;
+                
+                // Visualize current node
+                const currentCell = getCellElement(row, col);
+                if (!currentCell.classList.contains('start') && !currentCell.classList.contains('end')) {
+                    currentCell.classList.add('current');
+                    await new Promise(resolve => setTimeout(resolve, VISIT_SPEED));
+                    currentCell.classList.remove('current');
+                    currentCell.classList.add('visited');
+                }
+                
+                // Check if we reached the end
+                if (row === endPos.row && col === endPos.col) {
+                    found = true;
+                    break;
+                }
+                
+                // Explore neighbors
+                for (const [dr, dc] of directions) {
+                    const newRow = row + dr;
+                    const newCol = col + dc;
+                    
+                    // Check boundaries
+                    if (newRow < 0 || newRow >= ROWS || newCol < 0 || newCol >= COLS) continue;
+                    
+                    // Check if it's a wall or already visited
+                    if (grid[newRow][newCol] === WALL || visited[newRow][newCol]) continue;
+                    
+                    // Calculate new distance
+                    const newDistance = distances[row][col] + 1;
+                    
+                    // Update if we found a shorter path
+                    if (newDistance < distances[newRow][newCol]) {
+                        distances[newRow][newCol] = newDistance;
+                        previous[newRow][newCol] = { row, col };
+                        priorityQueue.push({ row: newRow, col: newCol, distance: newDistance });
+                    }
+                }
+            }
+            
+            // Reconstruct and visualize path if found
+            if (found) {
+                const path = [];
+                let current = { row: endPos.row, col: endPos.col };
+                
+                while (current && !(current.row === startPos.row && current.col === startPos.col)) {
+                    path.unshift(current);
+                    current = previous[current.row][current.col];
+                }
+                
+                // Animate the path
+                for (const node of path) {
+                    const cell = getCellElement(node.row, node.col);
+                    if (!cell.classList.contains('end')) {
+                        await new Promise(resolve => setTimeout(resolve, PATH_SPEED));
+                        cell.classList.add('path');
+                    }
+                }
+            }
+            
+            isRunning = false;
+        }
+        
+        // Event listeners for buttons
+        document.getElementById('startBtn').addEventListener('click', dijkstra);
+        document.getElementById('resetBtn').addEventListener('click', resetGrid);
+        document.getElementById('clearPathBtn').addEventListener('click', clearPath);
+        document.getElementById('randomWallsBtn').addEventListener('click', generateRandomWalls);
+        document.getElementById('applyGridBtn').addEventListener('click', applyGridSettings);
+        
+        // Event listener for node type selection
+        document.getElementById('nodeTypeSelect').addEventListener('change', (e) => {
+            selectedNodeType = e.target.value;
+        });
+        
+        // Initialize the grid on load
+        window.addEventListener('load', initializeGrid);
+    </script>
+
+<script src="https://static.app/js/static.js" type="text/javascript"></script>
+</body>
+</html>
