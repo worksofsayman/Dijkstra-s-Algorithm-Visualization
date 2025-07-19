@@ -6,3 +6,4 @@ Built in VS Code using:
 3) Vanilla Javascript
 
 Hosting by static.app: https://dijkstrabysayman.static.domains/
+DSA Visualiztion fun project
